@@ -4,6 +4,10 @@
 !README.md
 !Makefile
 
+## subject
+!src
+!src/*
+
 ## secrets
 !secrets
 !secrets/key.gpg
