@@ -1,3 +1,7 @@
 *
 
 !.gitignore
+
+## secrets
+!secrets
+!secrets/key.gpg
