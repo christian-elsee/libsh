@@ -8,12 +8,13 @@ set -eu
 argv=$@
 
 ## main
-enc() { local payload=$@
-	{ test "$payload" = "-" ] \
-			&& cat \
-			|| echo "$@"
-	} | base64 \
-		| tr -d \\n
+enc() { local payload=$*
+  if [ "$payload" = "-" ] ;then
+    cat
+	else
+    echo "$@"
+	fi | base64 \
+	   | tr -d \\n
 }
 
 if [ "$(basename -- "$0")" = "enc.sh" ]; then

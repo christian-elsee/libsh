@@ -7,13 +7,30 @@ export TS   := $(shell date +%s)
 .POSIX:
 
 ## workflow
-@goal: dist
+@goal: distclean dist build check
 
 dist: ;: ## dist
 	mkdir -p $@
+
+build: dist
+	docker build \
+		-t local/$(NAME):latest \
+		.
+
+check: ;: ## check
+	# requires dind to test script thats
+	docker create \
+		--name check.$(NAME) \
+		--rm \
+		local/$(NAME):latest
+	docker cp test check.$(NAME):/opt/main
+	docker cp src check.$(NAME):/opt/main
+	docker start -ai check.$(NAME)
+
 distclean: ;: ## distclean
 	rm -rvf dist
 clean: distclean ;: ## clean
+	rm -rvf assets
 
 ## ad hoc
 push: branch := $(shell git branch --show-current)

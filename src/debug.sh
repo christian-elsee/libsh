@@ -6,9 +6,8 @@ set -eu
 
 ## func
 debug () { local status=$? msg=$1 ;shift
-	xargs -- printf "$*" \
-	| xargs -- logger -sp DEBUG "$msg" -- \
-			"trace=$0" \
-			"pid=$$" \
-			"status=$status"
-}
+	logger -sp DEBUG "$msg" -- \
+  	"trace=$0" \
+  	"pid=$$" \
+  	"status=$status"
+} 2>&3
