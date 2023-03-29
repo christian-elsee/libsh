@@ -1,10 +1,13 @@
-# utilsh
+# libsh
 
-A collection of posix compliant, executable, ad-hoc utility scripts. See [libsh](/christian-elsee/libsh) for a collection of "stdlib" type function decs/defs.
+A collection of posix compliant, "stdlib" type, shell functions. See [utilsh](github.com/christian-elsee/utilsh) for a collection of executable scripts
 
 - [Requirements](#requirements)
 - [Usage](#usage)
-  - [git-rebase-author](#git-rebase-author)
+  - [debug](#debug)
+  - [enc](#enc)
+  - [logger](#logger)
+  - [teardown](#teardown)
 - [Testing](#testing)
 - [Development](#development)
 - [License](#license)
@@ -29,23 +32,6 @@ This is free software; you are free to change and redistribute it.
 There is NO WARRANTY, to the extent permitted by law.
 ```
 
-- shellcheck, 0.9.0
-```sh
-$ shellcheck -V
-ShellCheck - shell script analysis tool
-version: 0.9.0
-license: GNU General Public License, version 3
-website: https://www.shellcheck.net
-```
-
-- socat, 1.7.4.3
-```sh
-$ socat -V
-socat by Gerhard Rieger and contributors - see www.dest-unreach.org
-socat version 1.7.4.3 on
-   running on Darwin version Darwin Kernel Version 20.3.0: Thu Jan 21 00:07:06 PST 2021; root:xnu-7195.81.3~1/RELEASE_X86_64, release 20.3.0, machine x86_64
-```
-
 - docker, 20.10.12
 ```sh
 $ docker version | grep -A2 -E -- 'Client|Server'
@@ -57,128 +43,80 @@ Server:
  Engine:
   Version:          20.10.12
 ```
+
 ## Usage
 
-A list of the util scripts commited to this repo, which details usage and provides examples
+A list of the function definitions commited to this repo, which details usage and provides examples
 
-#### ## <a id="git-rebase-author"></a>[src/git-rebase-author.sh](src/git-rebase-author.sh)
+#### ## <a id="debug"></a>[src/debug.sh](src/debug.sh)
 
-- Rebases git commit log to a given sha
-- Replaces author name, contact email
-- Useful for dealing with the reality of contact information being frequently updated
+Writes a debug priority log entry to "stdlog" (~~fd#3~~)
 
 ```sh
-# print usage
-$ src/git-rebase-author.sh -h
-usage:git-rebase-author.sh <sha> <author> <name>
+$ ( . src/debug.sh; debug "foobar" 3>&2 ;)
+Mar 29 20:07:17  christian[16791] <Debug>: foobar -- trace=-bash pid=8101 status=0
 ```
-```sh
-# print latest commit log
-$ git log -n1 | grep -E '^(commit|Author)'
-commit 01422e4485bd71b27ddc5af36a533c5aec2ddcec (HEAD -> feature/git-rebase-author.sh)
-Author: christian <christian@elsee.xyz>
-```
-```sh
-# update author
-$ src/git-rebase-author.sh cc6b3edf7e7398aedfda87d5172c002bc42bc7fe~1 ssdd christian@elsee.xyz
-Mar 23 03:47:40  christian[17850] <Debug>: Enter :: sha=cc6b3edf7e7398aedfda87d5172c002bc42bc7fe~1 name=ssdd email=christian@elsee.xyz
-...
-```
-```sh
-# print latest commit log again
-$ git log -n1 | grep -E '^(commit|Author)'
-commit cccae4b5fc39c97bd99dfb817f2855c9f2d4e906 (HEAD -> feature/git-rebase-author.sh)
-Author: ssdd <christian@elsee.xyz>
-```
-#### ## <a id="mws"></a>[src/mws.sh](src/mws.sh)
 
-- A socat-based minimal webserver,
-- Returns a valid HTTP/1.0 response with an empty body
-- Useful as a sanity check: an http clients' dispatch cycle and request payload
+#### ## <a id="logger"></a>[src/logger.sh](src/logger.sh)
+
+A system logger wrapper that adds additional attributes, deals with portability issues and writes log entries to "stdlog" (~~fd#3~~)
 
 ```sh
-# usage
-$ src/mws.sh -h
-usage: mws.sh <port>
+$ ( . src/logger.sh; logger -sp DEBUG -- "Test" 3>&2 ;)
+Mar 29 20:23:52  -bash#8101[17198] <Debug>: Test
+```
 
-A minimal HTTP server
-```
-```sh
-# bind to 8080
-$ src/mws.sh 8080
-Mar 23 13:46:31  christian[21054] <Debug>: Enter :: port=8080
-2023/03/23 13:46:31 socat[21055] N listening on LEN=16 AF=2 0.0.0.0:8080
-```
-```sh
-# curl from sep terminal/session/etc
-$ curl -D/dev/stderr localhost:8080
-HTTP/1.0 200 OK
-```
-```sh
-# socat logs from request
-2023/03/23 13:46:31 socat[21055] N listening on LEN=16 AF=2 0.0.0.0:8080
-...
-> 2023/03/23 13:48:16.001524  length=73 from=0 to=72
-GET / HTTP/1.1
-Host: localhost:8080
-User-Agent: curl/7.64.1
-Accept: */*
-```
-#### ## <a id="posix"></a>[src/posix.sh](src/posix.sh)
+#### ## <a id="enc"></a>[src/enc.sh](src/enc.sh)
 
-- Passes an arbitrary shell command to an alpine posix shell
-- Runs in a short-lived, self-cleaning docker container
-- The container exit status is useful as a boolean for quick sanity checks of any command
+A portable base64 encoder against stdin or variadic argument set
 
 ```sh
-# usage
-$ src/posix.sh -h
-usage: posix.sh <argv>
+$ ( . src/enc.sh; enc foo bar world ; )
+Zm9vIGJhciB3b3JsZAo=
+```
+```sh
+$ ( . src/enc.sh; echo foo bar world | enc - ; )
+Zm9vIGJhciB3b3JsZAo=
+```
+#### ## <a id="teardown"></a>[src/teardown.sh](src/teardown.sh)
 
-Run argv on posix-strict shell
+A minimal [signal handler](https://man7.org/linux/man-pages/man1/trap.1p.html) used to log caller, status and pid. By default, handles EXIT, INT and TERM signals.
+
+```sh
+$ ( $ ( . src/teardown.sh; echo foobar )
+foobar
+Mar 29 20:34:52  christian[17392] <Debug>: Teardown -- :: trace=-bash pid=8101 status=0
 ```
 ```sh
-# use built-in read with flag for default value in bash
-$ read -ei "default value" readvar
-default value
-$ echo $readvar
-default value
+$ ( . src/teardown.sh; false )
+Mar 29 20:35:31  christian[17406] <Debug>: Teardown -- :: trace=-bash pid=8101 status=1
 ```
 ```sh
-# posix standard doesn't define "-ei" flags for built-in read
-$ src/posix.sh read -i "default value" readvar
-Mar 23 14:01:09  christian[21141] <Debug>: Enter :: read -i default value readvar
-+ cat /etc/os-release
-NAME="Alpine Linux"
-ID=alpine
-VERSION_ID=3.17.2
-PRETTY_NAME="Alpine Linux v3.17"
-HOME_URL="https://alpinelinux.org/"
-BUG_REPORT_URL="https://gitlab.alpinelinux.org/alpine/aports/-/issues"
-+ read -i default value readvar
-_: read: line 0: illegal option -i
-$ echo $?
-2
+$ ( . src/teardown.sh; exit 22 )
+Mar 29 20:35:51  christian[17415] <Debug>: Teardown -- :: trace=-bash pid=8101 status=22
+```
+```sh
+$ ( . src/teardown.sh; sleep inf ) &
+$ kill %1
+Terminated: 15
+Mar 29 20:36:44  christian[17436] <Debug>: Teardown -- :: trace=-bash pid=8101 status=143
 ```
 
 ## Testing
 
-A set of regressions tests built on top of [bats](https://github.com/bats-core/bats-core) that output [tap](https://testanything.org/) compliant reports.
+A set of acceptance tests built on top of [bats](https://github.com/bats-core/bats-core) that output [tap](https://testanything.org/) compliant reports.
 
-Tests should be executed as part of the make workflow, but can be executed independently as well.
+Tests are executed as part of the make workflow, but can be executed independently as well.
 
 ```sh
 $ make check
 ...
-1..8
-ok 1 can print usage
-ok 2 can pass a help flag
-ok 3 fails to use an arbitrary flag
-ok 4 can rebase a commit log's author
-ok 5 can send an http request
-ok 6 can receive an http response
-ok 7 can run a posix compliant command
-ok 8 fails to run a non posix-compliant command
+1..5
+ok 1 can write a debug log entry to stderr
+ok 2 can encode an argument payload
+ok 3 can encode a payload from stdin
+ok 4 can log to stdlog
+ok 5 can call teardown on exit
 ```
 
 Tests cases are commited, as ~~bats~~ files, to the [test](test) directory.
@@ -187,13 +125,13 @@ Tests cases are commited, as ~~bats~~ files, to the [test](test) directory.
 
 A minimal overview of the development workflow.
 
-1\. Add an executable script to `src` and commit.
+1\. Add a shell file to `src` and commit.
 ```sh
 $ cat <<eof | tee src/foobar.sh
 #!/bin/sh
 set -eu
 
-echo foobar
+foobar() { echo foobar ; }
 eof
 $ chmod +x src/foobar.sh
 ````

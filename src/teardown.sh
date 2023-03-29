@@ -1,6 +1,4 @@
 #!/bin/sh
-## Produces TAP output from a given set of executable files
-#$ test.sh ./test ./another/path *.test
 set -eu
 trap 'teardown $0 $$ $?' EXIT INT TERM
 
@@ -10,5 +8,6 @@ teardown() { local status=$?
     ::  "trace=$1" \
         "pid=$2" \
         "status=$status"
+  trap - EXIT INT TERM
 	exit $status
 }
