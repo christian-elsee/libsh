@@ -1,0 +1,21 @@
+name: main
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout push target
+        uses: actions/checkout@v3
+
+      - name: Log git identifiers for build
+        run: >
+          logger -sp INFO -- "Start build" \
+            "branch=$GITHUB_REF" \
+            "sha=$GITHUB_SHA"
+
+      - name: Run make workflow
+        run: make
+

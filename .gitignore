@@ -3,6 +3,20 @@
 !.gitignore
 !README.md
 !Makefile
+!Dockerfile
+!.dockerignore
+
+## gh actions
+!.github
+!.github/**
+
+## subject
+!src
+!src/*
+
+## test
+!test
+!test/*
 
 ## secrets
 !secrets
