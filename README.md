@@ -133,13 +133,11 @@ set -eu
 
 foobar() { echo foobar ; }
 eof
-$ chmod +x src/foobar.sh
 ````
 ```sh
 $ git add src/foobar.sh
 $ git commit -m "Add Development Workflow Example Script"
-[feature-github-actions db309ff] Add Development Workflow Example Script
- Date: Mon Mar 27 19:00:31 2023 +0200
+[feature-workflow 13ff3c4] Add Development Workflow Example Script
  1 file changed, 4 insertions(+)
  create mode 100644 src/foobar.sh
  ```
@@ -147,27 +145,29 @@ $ git commit -m "Add Development Workflow Example Script"
 2\. Add a [bats](https://github.com/bats-core/bats-core) test case to `test` and commit.
 ```sh
 $ cat <<eof | tee test/foobar.bats
-> #!/usr/bin/env bats
+#!/usr/bin/env bats
+. src/foobar.sh
 
 @test "can foobar" {
-  foobar.sh | grep foobar
+  foobar | grep foobar
 }
 
 @test "can not barfoo" {
-  ! ( foobar.sh | grep barfoo )
+  ! foobar | grep barfoo
 }
 eof
 ```
 ```sh
+$ git add test/foobar.bats
 $ git commit -m "Add Development Worfklow Example Test"
-[feature-github-actions 72c862f] Add Development Worfklow Example Test
- 1 files changed, 9 insertions(+), 0 deletions(-)
+[feature-workflow b315909] Add Development Worfklow Example Test
+ 1 file changed, 10 insertions(+)
  create mode 100644 test/foobar.bats
 ```
 
 3\. Evaluate test cases by running `make` workflow.
 ```sh
-$ make | grep foo
+$ make check | grep foo
 ok 4 can foobar
 ok 5 can not barfoo
 ```
@@ -175,31 +175,32 @@ ok 5 can not barfoo
 4\. Push changes to repository on successful make workflow
 ```sh
 $ make push
-test "feature-github-actions"
+test "feature-workflow"
 # ensure working tree is clean for push
 git status --porcelain \
   | xargs \
   | grep -qv .
 ssh-agent bash -c \
   "<secrets/key.gpg gpg -d | ssh-add - \
-    && git push origin feature-github-actions -f    \
+    && git push origin feature-workflow -f    \
   "
 gpg: encrypted with rsa2048 key, ID BD4B2D8362388282, created 2019-05-30
       "local <local@me>"
 Identity added: (stdin) (ssdd)
 ...
- * [new branch]      feature-github-actions -> feature-github-actions
+To github.com:christian-elsee/libsh.git
+ * [new branch]      feature-workflow -> feature-workflow
 ```
 
 5\. Check github actions build status.
 ```sh
 $ ( gh workflow view main.yaml ) </dev/null
 main - main.yaml
-ID: 52494213
+ID: 52746834
 
-Total runs 3
+Total runs 2
 Recent runs
-✓  Update README                  main  feature-github-actions  push  4534871010
+✓  Document Development Workflow  main  feature-workflow  push  4556911794
 ```
 
 ## License

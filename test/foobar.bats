@@ -6,5 +6,5 @@
 }
 
 @test "can not barfoo" {
-  ! echo foobar | grep -v foobar
+  ! foobar | grep barfoo
 }
